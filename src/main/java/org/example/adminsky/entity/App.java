@@ -1,15 +1,18 @@
 package org.example.adminsky.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import lombok.AccessLevel;
 
 @Entity
 @Table(name = "app", uniqueConstraints = @UniqueConstraint(name = "uq_app_code", columnNames = "code"))
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class App extends BaseAuditEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,5 +25,6 @@ public class App extends BaseAuditEntity {
     private String name;
 
     @Column(name = "is_active", nullable = false)
-    private boolean active = true;
+    @Builder.Default
+    boolean active = true;
 }
