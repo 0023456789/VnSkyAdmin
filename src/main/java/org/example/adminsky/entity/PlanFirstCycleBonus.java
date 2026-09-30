@@ -1,8 +1,7 @@
 package org.example.adminsky.entity;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 import jakarta.persistence.*;
 import org.example.adminsky.enums.BonusType;
@@ -11,7 +10,10 @@ import org.example.adminsky.enums.BonusType;
 @Table(name = "plan_first_cycle_bonus", uniqueConstraints = @UniqueConstraint(name = "uq_plan_bonus", columnNames = {"plan_id", "bonus_type"}))
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class PlanFirstCycleBonus {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

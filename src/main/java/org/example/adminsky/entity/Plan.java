@@ -1,9 +1,9 @@
 package org.example.adminsky.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import lombok.AccessLevel;
 import org.example.adminsky.enums.CutoffPolicy;
 import org.example.adminsky.enums.QuotaType;
 
@@ -15,7 +15,10 @@ import java.util.Set;
 @Table(name = "plan", uniqueConstraints = @UniqueConstraint(name = "uq_plan_code", columnNames = "code"))
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class Plan extends BaseAuditEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -47,7 +50,8 @@ public class Plan extends BaseAuditEntity {
     private Short cycleDays;
 
     @Column(name = "voice_minutes", nullable = false)
-    private Integer voiceMinutes = 0;
+    @Builder.Default
+    Integer voiceMinutes = 0;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "cutoff_policy", nullable = false, length = 20)
@@ -57,11 +61,14 @@ public class Plan extends BaseAuditEntity {
     private Integer throttleSpeedKbps;
 
     @Column(name = "is_active", nullable = false)
-    private boolean active = true;
+    @Builder.Default
+    boolean active = true;
 
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<PlanFirstCycleBonus> bonuses = new LinkedHashSet<>();
+    @Builder.Default
+    Set<PlanFirstCycleBonus> bonuses = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<PlanAppQuota> appQuotas = new LinkedHashSet<>();
+    @Builder.Default
+    Set<PlanAppQuota> appQuotas = new LinkedHashSet<>();
 }
