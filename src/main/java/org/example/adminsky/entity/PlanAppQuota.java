@@ -1,8 +1,7 @@
 package org.example.adminsky.entity;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 import jakarta.persistence.*;
 import org.example.adminsky.enums.QuotaType;
@@ -11,13 +10,16 @@ import org.example.adminsky.enums.QuotaType;
 @Table(name = "plan_app_quota", uniqueConstraints = @UniqueConstraint(name = "uq_plan_app", columnNames = {"plan_id", "app_id"}))
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class PlanAppQuota {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @ManyToOne(fetch = FetchType.LAZY, optional = false) @JoinColumn(name = "plan_id", nullable = false)
     private Plan plan;
-    @ManyToOne(fetch = FetchType.LAZY, optional = false) @JoinColumn(name = "app_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false) @JoinColumn(name = "app_id", nullable = false, foreignKey = @ForeignKey(name = "fk_plan_app_quota_app"))
     private App app;
     @Enumerated(EnumType.STRING) @Column(name = "quota_type", nullable = false, length = 20)
     private QuotaType quotaType;
