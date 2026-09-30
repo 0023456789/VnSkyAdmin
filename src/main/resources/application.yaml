@@ -10,7 +10,7 @@ spring:
   datasource:
     url: ${DBMS_CONNECTION:jdbc:postgresql://localhost:5432/${POSTGRES_DB:mvno_plan}}
     username: ${DBMS_USERNAME:${POSTGRES_USER:postgres}}
-    password: ${DBMS_PASSWORD:${POSTGRES_PASSWORD:postgres}}
+    password: ${DBMS_PASSWORD:${POSTGRES_PASSWORD:}}
   jpa:
     open-in-view: false
     hibernate:
