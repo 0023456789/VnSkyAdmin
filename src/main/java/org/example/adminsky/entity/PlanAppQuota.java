@@ -17,7 +17,7 @@ public class PlanAppQuota {
     private Long id;
     @ManyToOne(fetch = FetchType.LAZY, optional = false) @JoinColumn(name = "plan_id", nullable = false)
     private Plan plan;
-    @ManyToOne(fetch = FetchType.LAZY, optional = false) @JoinColumn(name = "app_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false) @JoinColumn(name = "app_id", nullable = false, foreignKey = @ForeignKey(name = "fk_plan_app_quota_app"))
     private App app;
     @Enumerated(EnumType.STRING) @Column(name = "quota_type", nullable = false, length = 20)
     private QuotaType quotaType;

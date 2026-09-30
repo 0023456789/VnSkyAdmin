@@ -10,9 +10,10 @@ services:
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # Fresh volume for the new DB. The previous volume is left untouched.
+      - postgres_data_v2:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:?Set POSTGRES_USER in .env} -d ${POSTGRES_DB:?Set POSTGRES_DB in .env}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -42,7 +43,8 @@ services:
       - adminsky-net
 
 volumes:
-  postgres_data:
+  postgres_data_v2:
+    name: adminsky_postgres_data_v2
 
 networks:
   adminsky-net:
