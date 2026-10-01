@@ -12,8 +12,11 @@ public final class PlanSpecifications {
     }
 
     public static Specification<Plan> hasDuration(Integer durationMonths) {
-        return (root, query, cb) -> durationMonths == null ? cb.conjunction()
-                : cb.equal(root.get("durationMonths"), durationMonths.shortValue());
+        if (durationMonths == null) return (root, query, cb) -> cb.conjunction();
+        if (durationMonths < Short.MIN_VALUE || durationMonths > Short.MAX_VALUE) {
+            return (root, query, cb) -> cb.disjunction();
+        }
+        return (root, query, cb) -> cb.equal(root.get("durationMonths"), durationMonths.shortValue());
     }
 
     public static Specification<Plan> keywordLike(String keyword) {

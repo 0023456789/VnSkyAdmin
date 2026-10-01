@@ -2,21 +2,30 @@ package org.example.adminsky.validator;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import org.example.adminsky.dto.request.PlanRequest;
+import org.example.adminsky.dto.request.PlanQuotaFields;
 import org.example.adminsky.enums.QuotaType;
 
-public class PlanQuotaValidator implements ConstraintValidator<PlanQuotaConstraint, PlanRequest> {
-    @Override public boolean isValid(PlanRequest request, ConstraintValidatorContext context) {
-        if (request == null || request.getQuotaType() == null) return true;
-        boolean valid = request.getQuotaType() == QuotaType.PER_CYCLE
-                ? request.getCycleDays() != null && request.getDurationMonths() != null
-                    && request.getCycleDays() <= request.getDurationMonths() * 30
-                : request.getCycleDays() == null;
-        if (!valid) {
-            context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate(context.getDefaultConstraintMessageTemplate())
-                    .addPropertyNode("cycleDays").addConstraintViolation();
+public class PlanQuotaValidator implements ConstraintValidator<PlanQuotaConstraint, PlanQuotaFields> {
+
+    @Override
+    public boolean isValid(PlanQuotaFields value, ConstraintValidatorContext context) {
+        if (value == null || value.getQuotaType() == null) {
+            return true;
         }
-        return valid;
+        boolean ok;
+        if (value.getQuotaType() == QuotaType.PER_CYCLE) {
+            ok = value.getCycleDays() != null
+                    && value.getDurationMonths() != null
+                    && value.getCycleDays() <= value.getDurationMonths() * 30;
+        } else {
+            ok = value.getCycleDays() == null;
+        }
+        if (!ok) {
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("PLAN_QUOTA_INVALID")
+                    .addPropertyNode("cycleDays")
+                    .addConstraintViolation();
+        }
+        return ok;
     }
 }

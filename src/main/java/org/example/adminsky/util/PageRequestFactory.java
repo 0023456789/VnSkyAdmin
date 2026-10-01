@@ -16,8 +16,8 @@ public final class PageRequestFactory {
         if (parts.length != 2 || !allowlist.containsKey(parts[0]) || !isDirection(parts[1])) {
             throw new AppException(ErrorCode.INVALID_PAGE_REQUEST);
         }
-        return PageRequest.of(page, size,
-                Sort.by(Sort.Direction.fromString(parts[1]), allowlist.get(parts[0])));
+        Sort requestedSort = Sort.by(Sort.Direction.fromString(parts[1]), allowlist.get(parts[0]));
+        return PageRequest.of(page, size, requestedSort.and(Sort.by(Sort.Direction.ASC, "id")));
     }
 
     private static boolean isDirection(String value) {

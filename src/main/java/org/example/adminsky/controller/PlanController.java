@@ -55,7 +55,7 @@ public class PlanController {
     ApiResponse<PlanResponse> updatePlanStatus(@PathVariable Long planId,
                                                 @RequestBody @Valid PlanStatusRequest request) {
         return ApiResponse.<PlanResponse>builder()
-                .result(planService.updatePlanStatus(planId, request.getIsActive())).build();
+                .result(planService.updatePlanStatus(planId, request.getActive())).build();
     }
 
     @DeleteMapping("/{planId}")

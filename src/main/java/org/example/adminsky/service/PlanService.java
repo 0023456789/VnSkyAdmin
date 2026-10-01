@@ -20,6 +20,8 @@ import org.example.adminsky.exception.AppException;
 import org.example.adminsky.exception.ErrorCode;
 import org.example.adminsky.mapper.PlanMapper;
 import org.example.adminsky.repository.AppRepository;
+import org.example.adminsky.repository.PlanAppQuotaRepository;
+import org.example.adminsky.repository.PlanFirstCycleBonusRepository;
 import org.example.adminsky.repository.PlanRepository;
 import org.example.adminsky.repository.specification.PlanSpecifications;
 import org.example.adminsky.constant.SortFields;
@@ -31,6 +33,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.sql.SQLException;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -45,8 +49,11 @@ import java.util.stream.Collectors;
 public class PlanService {
     PlanRepository planRepository;
     AppRepository appRepository;
+    PlanAppQuotaRepository planAppQuotaRepository;
+    PlanFirstCycleBonusRepository planFirstCycleBonusRepository;
     PlanMapper planMapper;
     PlanRequestValidator planRequestValidator;
+    Clock clock;
 
     /** Creates a plan and persists its bonus and app-quota children atomically. */
     @Transactional
@@ -80,29 +87,27 @@ public class PlanService {
     /** Replaces all plan fields and child rows while holding a write lock. */
     @Transactional
     public PlanResponse updatePlan(Long planId, PlanUpdateRequest request) {
-        Plan plan = planRepository.findByIdForUpdate(planId).orElseThrow(() -> planNotFound(planId));
+        Plan plan = planRepository.findForUpdateById(planId).orElseThrow(() -> planNotFound(planId));
         planRequestValidator.validate(request, planId);
         planMapper.updatePlan(plan, request);
         syncBonuses(plan, request.getBonuses());
         syncAppQuotas(plan, request.getAppQuotas());
+        plan.setUpdatedAt(Instant.now(clock));
         return planMapper.toPlanResponse(planRepository.saveAndFlush(plan));
     }
 
     /** Updates status under a write lock and returns the refreshed plan. */
     @Transactional
     public PlanResponse updatePlanStatus(Long planId, Boolean isActive) {
-        Plan plan = planRepository.findByIdForUpdate(planId).orElseThrow(() -> planNotFound(planId));
-        if (planRepository.updateStatus(planId, isActive) == 0) throw planNotFound(planId);
+        Plan plan = planRepository.findForUpdateById(planId).orElseThrow(() -> planNotFound(planId));
+        plan.setActive(isActive);
         return planMapper.toPlanResponse(findPlanDetail(planId));
     }
 
     /** Hard deletes a plan; RESTRICT foreign keys are reported as PLAN_IN_USE. */
     @Transactional
     public String deletePlan(Long planId) {
-        Plan plan = planRepository.findById(planId).orElseThrow(() -> planNotFound(planId));
-        if (planRepository.subscriptionTableExists() && planRepository.existsSubscription(planId)) {
-            throw new AppException(ErrorCode.PLAN_IN_USE);
-        }
+        Plan plan = planRepository.findForUpdateById(planId).orElseThrow(() -> planNotFound(planId));
         try {
             planRepository.delete(plan);
             planRepository.flush();
@@ -115,20 +120,24 @@ public class PlanService {
 
     private void syncBonuses(Plan plan, List<BonusRequest> requests) {
         Set<BonusType> bonusTypes = new HashSet<>();
-        Set<PlanFirstCycleBonus> bonuses = new HashSet<>();
+        Map<BonusType, PlanFirstCycleBonus> existing = plan.getBonuses().stream()
+                .collect(Collectors.toMap(PlanFirstCycleBonus::getBonusType, bonus -> bonus));
         for (BonusRequest request : requests) {
             if (!bonusTypes.add(request.getBonusType())) throw new AppException(ErrorCode.PLAN_BONUS_DUPLICATED);
-            PlanFirstCycleBonus bonus = planMapper.toEntity(request);
-            bonus.setPlan(plan);
-            bonuses.add(bonus);
+            PlanFirstCycleBonus bonus = existing.remove(request.getBonusType());
+            if (bonus == null) {
+                plan.addBonus(planMapper.toEntity(request));
+            } else {
+                bonus.setAmount(request.getAmount());
+            }
         }
-        plan.getBonuses().clear();
-        plan.getBonuses().addAll(bonuses);
+        existing.values().forEach(plan::removeBonus);
     }
 
     private void syncAppQuotas(Plan plan, List<AppQuotaRequest> requests) {
         Set<Long> appIds = new HashSet<>();
-        Set<PlanAppQuota> quotas = new HashSet<>();
+        Map<Long, PlanAppQuota> existing = plan.getAppQuotas().stream()
+                .collect(Collectors.toMap(quota -> quota.getApp().getId(), quota -> quota));
         Map<Long, App> appById = new HashMap<>();
         for (App app : appRepository.findAllById(requests.stream().map(AppQuotaRequest::getAppId).distinct().toList())) {
             appById.put(app.getId(), app);
@@ -138,13 +147,17 @@ public class PlanService {
             App app = appById.get(request.getAppId());
             if (app == null) throw new AppException(ErrorCode.APP_NOT_FOUND);
             if (!app.isActive()) throw new AppException(ErrorCode.APP_INACTIVE);
-            PlanAppQuota quota = planMapper.toEntity(request);
-            quota.setPlan(plan);
-            quota.setApp(app);
-            quotas.add(quota);
+            PlanAppQuota quota = existing.remove(request.getAppId());
+            if (quota == null) {
+                quota = planMapper.toEntity(request);
+                quota.setApp(app);
+                plan.addAppQuota(quota);
+            } else {
+                quota.setQuotaType(request.getQuotaType());
+                quota.setQuotaMb(request.getQuotaMb());
+            }
         }
-        plan.getAppQuotas().clear();
-        plan.getAppQuotas().addAll(quotas);
+        existing.values().forEach(plan::removeAppQuota);
     }
 
     private PageResponse<PlanSummaryResponse> toPageResponse(Page<Plan> page) {
@@ -158,16 +171,17 @@ public class PlanService {
                     .build();
         }
         List<Long> planIds = page.getContent().stream().map(Plan::getId).toList();
-        Map<Long, Long> appQuotaCounts = planRepository.countQuotas(planIds).stream()
-                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
-        Set<Long> planIdsWithBonus = new HashSet<>(planRepository.plansWithBonuses(planIds));
+        Map<Long, Long> appQuotaCounts = planAppQuotaRepository.countByPlanIds(planIds).stream()
+                .collect(Collectors.toMap(PlanAppQuotaRepository.PlanCountView::getPlanId,
+                        PlanAppQuotaRepository.PlanCountView::getCnt));
+        Set<Long> planIdsWithBonus = new HashSet<>(planFirstCycleBonusRepository.findPlanIdsWithBonus(planIds));
         return PageResponse.from(page.map(plan -> planMapper.toPlanSummary(plan,
                 appQuotaCounts.getOrDefault(plan.getId(), 0L), planIdsWithBonus.contains(plan.getId()))));
     }
 
     private Plan findPlanDetail(Long planId) {
-        Plan plan = planRepository.findDetailWithBonuses(planId).orElseThrow(() -> planNotFound(planId));
-        return planRepository.findDetailWithAppQuotas(planId).orElse(plan);
+        Plan plan = planRepository.findWithBonusesById(planId).orElseThrow(() -> planNotFound(planId));
+        return planRepository.findWithAppQuotasById(planId).orElse(plan);
     }
 
     private AppException planNotFound(Long planId) {

@@ -1,53 +1,33 @@
 package org.example.adminsky.validator;
 
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import lombok.AccessLevel;
-import org.example.adminsky.dto.request.PlanRequest;
 import org.example.adminsky.dto.request.BonusRequest;
-import org.example.adminsky.enums.CutoffPolicy;
-import org.example.adminsky.enums.QuotaType;
+import org.example.adminsky.dto.request.PlanRequestFields;
 import org.example.adminsky.exception.AppException;
 import org.example.adminsky.exception.ErrorCode;
 import org.example.adminsky.repository.PlanRepository;
-import org.springframework.stereotype.Component;
 import org.example.adminsky.util.CodeNormalizer;
+import org.springframework.stereotype.Component;
 
+/**
+ * Service-side checks that need the DB (code uniqueness) or cannot be expressed
+ * as Bean Validation alone (duplicate children). Quota/cutoff rules live on the DTOs.
+ */
 @Component
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class PlanRequestValidator {
+
     PlanRepository plans;
 
-    public void validate(PlanRequest request, Long planId) {
-        validatePlanRules(request);
+    public void validate(PlanRequestFields request, Long planId) {
         validateUniqueChildren(request);
         assertCodeAvailable(request.getCode(), planId);
     }
 
-    private void validatePlanRules(PlanRequest request) {
-        Integer durationMonths = request.getDurationMonths();
-        if (durationMonths == null) throw new AppException(ErrorCode.PLAN_DURATION_INVALID);
-        int months = durationMonths;
-        if (months != 1 && months != 6 && months != 12) {
-            throw new AppException(ErrorCode.PLAN_DURATION_INVALID);
-        }
-        if (request.getQuotaType() == QuotaType.PER_CYCLE) {
-            if (request.getCycleDays() == null || request.getCycleDays() > months * 30) {
-                throw new AppException(ErrorCode.PLAN_QUOTA_INVALID);
-            }
-        } else if (request.getCycleDays() != null) {
-            throw new AppException(ErrorCode.PLAN_QUOTA_INVALID);
-        }
-        if (request.getCutoffPolicy() == CutoffPolicy.THROTTLE && request.getThrottleSpeedKbps() == null) {
-            throw new AppException(ErrorCode.PLAN_CUTOFF_INVALID);
-        }
-        if (request.getCutoffPolicy() == CutoffPolicy.DISCONNECT && request.getThrottleSpeedKbps() != null) {
-            throw new AppException(ErrorCode.PLAN_CUTOFF_INVALID);
-        }
-    }
-
-    private void validateUniqueChildren(PlanRequest request) {
+    private void validateUniqueChildren(PlanRequestFields request) {
         long distinctBonuses = request.getBonuses().stream().map(BonusRequest::getBonusType).distinct().count();
         if (distinctBonuses != request.getBonuses().size()) {
             throw new AppException(ErrorCode.PLAN_BONUS_DUPLICATED);
@@ -67,5 +47,4 @@ public class PlanRequestValidator {
             throw new AppException(ErrorCode.PLAN_CODE_EXISTED);
         }
     }
-
 }

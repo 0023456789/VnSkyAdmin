@@ -2,20 +2,25 @@ package org.example.adminsky.validator;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import org.example.adminsky.dto.request.PlanRequest;
+import org.example.adminsky.dto.request.PlanCutoffFields;
 import org.example.adminsky.enums.CutoffPolicy;
 
-public class PlanCutoffValidator implements ConstraintValidator<PlanCutoffConstraint, PlanRequest> {
-    @Override public boolean isValid(PlanRequest request, ConstraintValidatorContext context) {
-        if (request == null || request.getCutoffPolicy() == null) return true;
-        boolean valid = request.getCutoffPolicy() == CutoffPolicy.THROTTLE
-                ? request.getThrottleSpeedKbps() != null
-                : request.getThrottleSpeedKbps() == null;
-        if (!valid) {
-            context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate(context.getDefaultConstraintMessageTemplate())
-                    .addPropertyNode("throttleSpeedKbps").addConstraintViolation();
+public class PlanCutoffValidator implements ConstraintValidator<PlanCutoffConstraint, PlanCutoffFields> {
+
+    @Override
+    public boolean isValid(PlanCutoffFields value, ConstraintValidatorContext context) {
+        if (value == null || value.getCutoffPolicy() == null) {
+            return true;
         }
-        return valid;
+        boolean ok = value.getCutoffPolicy() == CutoffPolicy.THROTTLE
+                ? value.getThrottleSpeedKbps() != null
+                : value.getThrottleSpeedKbps() == null;
+        if (!ok) {
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("PLAN_CUTOFF_INVALID")
+                    .addPropertyNode("throttleSpeedKbps")
+                    .addConstraintViolation();
+        }
+        return ok;
     }
 }
