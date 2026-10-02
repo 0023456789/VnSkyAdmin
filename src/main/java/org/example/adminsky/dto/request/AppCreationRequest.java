@@ -1,5 +1,6 @@
 package org.example.adminsky.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -18,5 +19,6 @@ public class AppCreationRequest {
     @NotBlank(message = "APP_NAME_INVALID")
     @Size(max = 100, message = "APP_NAME_INVALID")
     String name;
+    @JsonProperty("isActive")
     Boolean active;
 }

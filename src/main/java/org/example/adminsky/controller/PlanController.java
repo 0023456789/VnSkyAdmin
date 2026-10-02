@@ -1,10 +1,10 @@
 package org.example.adminsky.controller;
 
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import lombok.experimental.FieldDefaults;
 import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.example.adminsky.dto.request.PlanCreationRequest;
 import org.example.adminsky.dto.request.PlanStatusRequest;
 import org.example.adminsky.dto.request.PlanUpdateRequest;
@@ -53,7 +53,7 @@ public class PlanController {
 
     @PatchMapping("/{planId}/status")
     ApiResponse<PlanResponse> updatePlanStatus(@PathVariable Long planId,
-                                                @RequestBody @Valid PlanStatusRequest request) {
+                                               @RequestBody @Valid PlanStatusRequest request) {
         return ApiResponse.<PlanResponse>builder()
                 .result(planService.updatePlanStatus(planId, request.getActive())).build();
     }

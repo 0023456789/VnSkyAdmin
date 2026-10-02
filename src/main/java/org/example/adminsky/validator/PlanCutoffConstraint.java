@@ -2,8 +2,8 @@ package org.example.adminsky.validator;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
+
 import java.lang.annotation.*;
-import java.lang.annotation.Inherited;
 
 @Documented
 @Constraint(validatedBy = PlanCutoffValidator.class)
@@ -12,6 +12,8 @@ import java.lang.annotation.Inherited;
 @Inherited
 public @interface PlanCutoffConstraint {
     String message() default "PLAN_CUTOFF_INVALID";
+
     Class<?>[] groups() default {};
+
     Class<? extends Payload>[] payload() default {};
 }

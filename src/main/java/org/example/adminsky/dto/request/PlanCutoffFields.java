@@ -4,5 +4,6 @@ import org.example.adminsky.enums.CutoffPolicy;
 
 public interface PlanCutoffFields {
     CutoffPolicy getCutoffPolicy();
+
     Integer getThrottleSpeedKbps();
 }

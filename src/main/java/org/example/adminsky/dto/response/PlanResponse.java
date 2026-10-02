@@ -1,16 +1,13 @@
 package org.example.adminsky.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.time.Instant;
-import java.util.List;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.example.adminsky.enums.CutoffPolicy;
 import org.example.adminsky.enums.QuotaType;
+
+import java.time.Instant;
+import java.util.List;
 
 @Data
 @Builder
