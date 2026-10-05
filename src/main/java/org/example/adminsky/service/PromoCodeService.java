@@ -23,7 +23,6 @@ import org.example.adminsky.repository.PromoCodeRepository;
 import org.example.adminsky.repository.specification.PromoSpecifications;
 import org.example.adminsky.util.CodeNormalizer;
 import org.example.adminsky.util.PageRequestFactory;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -56,11 +55,7 @@ public class PromoCodeService {
         PromoCode promo = promoMapper.toPromo(request);
         promo.setCode(code);
         applyScope(promo, request.getAppliesToAllPlans(), request.getPlanIds());
-        try {
-            return promoMapper.toPromoResponse(promoCodeRepository.saveAndFlush(promo));
-        } catch (DataIntegrityViolationException ex) {
-            throw new AppException(ErrorCode.PROMO_CODE_EXISTED);
-        }
+        return promoMapper.toPromoResponse(promoCodeRepository.saveAndFlush(promo));
     }
 
     @Transactional(readOnly = true)
@@ -94,11 +89,7 @@ public class PromoCodeService {
         promoMapper.updatePromo(promo, request);
         promo.setCode(code);
         applyScope(promo, request.getAppliesToAllPlans(), request.getPlanIds());
-        try {
-            promoCodeRepository.flush();
-        } catch (DataIntegrityViolationException ex) {
-            throw new AppException(ErrorCode.PROMO_CODE_EXISTED);
-        }
+        promoCodeRepository.flush();
         return promoMapper.toPromoResponse(promo);
     }
 

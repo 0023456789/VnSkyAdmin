@@ -16,7 +16,6 @@ import org.example.adminsky.repository.AppRepository;
 import org.example.adminsky.repository.PlanAppQuotaRepository;
 import org.example.adminsky.util.CodeNormalizer;
 import org.example.adminsky.util.PageRequestFactory;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -43,11 +42,7 @@ public class AppService {
         String code = CodeNormalizer.normalize(request.getCode());
         if (appRepository.existsByCode(code)) throw new AppException(ErrorCode.APP_CODE_EXISTED);
         App app = appMapper.toApp(request);
-        try {
-            return appMapper.toAppResponse(appRepository.saveAndFlush(app));
-        } catch (DataIntegrityViolationException ex) {
-            throw new AppException(ErrorCode.APP_CODE_EXISTED);
-        }
+        return appMapper.toAppResponse(appRepository.saveAndFlush(app));
     }
 
     @Transactional
@@ -56,11 +51,7 @@ public class AppService {
         String code = CodeNormalizer.normalize(request.getCode());
         if (appRepository.existsByCodeAndIdNot(code, id)) throw new AppException(ErrorCode.APP_CODE_EXISTED);
         appMapper.updateApp(app, request);
-        try {
-            return appMapper.toAppResponse(appRepository.saveAndFlush(app));
-        } catch (DataIntegrityViolationException ex) {
-            throw new AppException(ErrorCode.APP_CODE_EXISTED);
-        }
+        return appMapper.toAppResponse(appRepository.saveAndFlush(app));
     }
 
     @Transactional
@@ -74,12 +65,8 @@ public class AppService {
     public String deleteApp(Long id) {
         App app = findOrThrow(id);
         if (planAppQuotaRepository.existsByAppId(id)) throw new AppException(ErrorCode.APP_IN_USE);
-        try {
-            appRepository.delete(app);
-            appRepository.flush();
-        } catch (DataIntegrityViolationException ex) {
-            throw new AppException(ErrorCode.APP_IN_USE);
-        }
+        appRepository.delete(app);
+        appRepository.flush();
         return "App has been deleted";
     }
 

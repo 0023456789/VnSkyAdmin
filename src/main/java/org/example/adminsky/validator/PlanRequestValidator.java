@@ -28,8 +28,8 @@ public class PlanRequestValidator {
     }
 
     private void validateUniqueChildren(PlanRequestFields request) {
-        long distinctBonuses = request.getBonuses().stream().map(BonusRequest::getBonusType).distinct().count();
-        if (distinctBonuses != request.getBonuses().size()) {
+        long distinctBonuses = request.getFirstCycleBonuses().stream().map(BonusRequest::getBonusType).distinct().count();
+        if (distinctBonuses != request.getFirstCycleBonuses().size()) {
             throw new AppException(ErrorCode.PLAN_BONUS_DUPLICATED);
         }
         long distinctApps = request.getAppQuotas().stream().map(item -> item.getAppId()).distinct().count();

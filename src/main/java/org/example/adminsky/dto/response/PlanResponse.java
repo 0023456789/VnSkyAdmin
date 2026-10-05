@@ -30,7 +30,8 @@ public class PlanResponse {
     Integer throttleSpeedKbps;
     @JsonProperty("isActive")
     Boolean active;
-    List<BonusResponse> bonuses;
+    /** Bonus configuration applied to the first cycle only. */
+    List<BonusResponse> firstCycleBonuses;
     List<AppQuotaResponse> appQuotas;
     Instant createdAt;
     Instant updatedAt;

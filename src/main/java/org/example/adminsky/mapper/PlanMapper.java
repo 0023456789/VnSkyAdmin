@@ -57,6 +57,7 @@ public interface PlanMapper {
     @Mapping(target = "app", ignore = true)
     PlanAppQuota toEntity(AppQuotaRequest request);
 
+    @Mapping(target = "firstCycleBonuses", source = "bonuses")
     PlanResponse toPlanResponse(Plan plan);
 
     BonusResponse toBonusResponse(PlanFirstCycleBonus bonus);
@@ -66,9 +67,7 @@ public interface PlanMapper {
     @Mapping(target = "appName", source = "app.name")
     AppQuotaResponse toAppQuotaResponse(PlanAppQuota quota);
 
-    @Mapping(target = "appQuotaCount", source = "appQuotaCount")
-    @Mapping(target = "hasBonus", source = "hasBonus")
-    PlanSummaryResponse toPlanSummary(Plan plan, long appQuotaCount, boolean hasBonus);
+    PlanSummaryResponse toPlanSummary(Plan plan);
 
     default BigDecimal map(Long value) {
         return value == null ? null : BigDecimal.valueOf(value);
