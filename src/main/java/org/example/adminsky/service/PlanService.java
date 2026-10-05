@@ -20,19 +20,15 @@ import org.example.adminsky.exception.AppException;
 import org.example.adminsky.exception.ErrorCode;
 import org.example.adminsky.mapper.PlanMapper;
 import org.example.adminsky.repository.AppRepository;
-import org.example.adminsky.repository.PlanAppQuotaRepository;
-import org.example.adminsky.repository.PlanFirstCycleBonusRepository;
 import org.example.adminsky.repository.PlanRepository;
 import org.example.adminsky.repository.specification.PlanSpecifications;
 import org.example.adminsky.constant.SortFields;
 import org.example.adminsky.util.PageRequestFactory;
 import org.example.adminsky.validator.PlanRequestValidator;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.sql.SQLException;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.HashMap;
@@ -49,8 +45,6 @@ import java.util.stream.Collectors;
 public class PlanService {
     PlanRepository planRepository;
     AppRepository appRepository;
-    PlanAppQuotaRepository planAppQuotaRepository;
-    PlanFirstCycleBonusRepository planFirstCycleBonusRepository;
     PlanMapper planMapper;
     PlanRequestValidator planRequestValidator;
     Clock clock;
@@ -60,10 +54,9 @@ public class PlanService {
     public PlanResponse createPlan(PlanCreationRequest request) {
         planRequestValidator.validate(request, null);
         Plan plan = planMapper.toPlan(request);
-        syncBonuses(plan, request.getBonuses());
+        syncBonuses(plan, request.getFirstCycleBonuses());
         syncAppQuotas(plan, request.getAppQuotas());
-        try { return planMapper.toPlanResponse(planRepository.save(plan)); }
-        catch (DataIntegrityViolationException exception) { throw new AppException(ErrorCode.PLAN_CODE_EXISTED); }
+        return planMapper.toPlanResponse(planRepository.save(plan));
     }
 
     /** Returns a SQL-paginated list with grouped child counts for this page only. */
@@ -90,7 +83,7 @@ public class PlanService {
         Plan plan = planRepository.findForUpdateById(planId).orElseThrow(() -> planNotFound(planId));
         planRequestValidator.validate(request, planId);
         planMapper.updatePlan(plan, request);
-        syncBonuses(plan, request.getBonuses());
+        syncBonuses(plan, request.getFirstCycleBonuses());
         syncAppQuotas(plan, request.getAppQuotas());
         plan.setUpdatedAt(Instant.now(clock));
         return planMapper.toPlanResponse(planRepository.saveAndFlush(plan));
@@ -108,13 +101,8 @@ public class PlanService {
     @Transactional
     public String deletePlan(Long planId) {
         Plan plan = planRepository.findForUpdateById(planId).orElseThrow(() -> planNotFound(planId));
-        try {
-            planRepository.delete(plan);
-            planRepository.flush();
-        } catch (DataIntegrityViolationException exception) {
-            if (isForeignKeyViolation(exception)) throw new AppException(ErrorCode.PLAN_IN_USE);
-            throw exception;
-        }
+        planRepository.delete(plan);
+        planRepository.flush();
         return "Plan has been deleted";
     }
 
@@ -170,13 +158,7 @@ public class PlanService {
                     .totalPages(page.getTotalPages())
                     .build();
         }
-        List<Long> planIds = page.getContent().stream().map(Plan::getId).toList();
-        Map<Long, Long> appQuotaCounts = planAppQuotaRepository.countByPlanIds(planIds).stream()
-                .collect(Collectors.toMap(PlanAppQuotaRepository.PlanCountView::getPlanId,
-                        PlanAppQuotaRepository.PlanCountView::getCnt));
-        Set<Long> planIdsWithBonus = new HashSet<>(planFirstCycleBonusRepository.findPlanIdsWithBonus(planIds));
-        return PageResponse.from(page.map(plan -> planMapper.toPlanSummary(plan,
-                appQuotaCounts.getOrDefault(plan.getId(), 0L), planIdsWithBonus.contains(plan.getId()))));
+        return PageResponse.from(page.map(planMapper::toPlanSummary));
     }
 
     private Plan findPlanDetail(Long planId) {
@@ -188,8 +170,4 @@ public class PlanService {
         return new AppException(ErrorCode.PLAN_NOT_FOUND, "Plan " + planId + " not found");
     }
 
-    private boolean isForeignKeyViolation(DataIntegrityViolationException exception) {
-        Throwable cause = org.springframework.core.NestedExceptionUtils.getMostSpecificCause(exception);
-        return cause instanceof SQLException sql && "23503".equals(sql.getSQLState());
-    }
 }

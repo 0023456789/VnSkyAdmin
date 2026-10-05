@@ -3,10 +3,7 @@ package org.example.adminsky.dto.response;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.example.adminsky.enums.CutoffPolicy;
 import org.example.adminsky.enums.QuotaType;
-
-import java.time.Instant;
 
 @Data
 @Builder
@@ -22,10 +19,7 @@ public class PlanSummaryResponse {
     Integer durationMonths;
     QuotaType quotaType;
     Long dataQuotaMb;
-    CutoffPolicy cutoffPolicy;
+    Integer cycleDays;
     @JsonProperty("isActive")
     Boolean active;
-    long appQuotaCount;
-    boolean hasBonus;
-    Instant createdAt;
 }

@@ -11,7 +11,7 @@ public interface PlanRequestFields extends PlanQuotaFields, PlanCutoffFields {
 
     Integer getVoiceMinutes();
 
-    List<BonusRequest> getBonuses();
+    List<BonusRequest> getFirstCycleBonuses();
 
     List<AppQuotaRequest> getAppQuotas();
 }

@@ -69,7 +69,7 @@ public class PlanCreationRequest implements PlanRequestFields {
     @NotNull(message = "PLAN_BONUS_INVALID")
     @Valid
     @Size(max = 2, message = "PLAN_BONUS_INVALID")
-    List<@NotNull @Valid BonusRequest> bonuses;
+    List<@NotNull @Valid BonusRequest> firstCycleBonuses;
 
     @NotNull(message = "PLAN_APP_QUOTA_INVALID")
     @Valid
