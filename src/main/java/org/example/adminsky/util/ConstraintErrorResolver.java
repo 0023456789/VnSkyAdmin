@@ -18,6 +18,7 @@ public class ConstraintErrorResolver {
         if ("uq_plan_code".equals(constraint)) return ErrorCode.PLAN_CODE_EXISTED;
         if ("uq_app_code".equals(constraint)) return ErrorCode.APP_CODE_EXISTED;
         if ("uq_promo_code".equals(constraint)) return ErrorCode.PROMO_CODE_EXISTED;
+        if ("23514".equals(state)) return ErrorCode.INVALID_KEY;
         if ("23503".equals(state)) {
             if (constraint != null && constraint.contains("plan_subscription_plan_id")) return ErrorCode.PLAN_IN_USE;
             if ("fk_plan_app_quota_app".equals(constraint)) return ErrorCode.APP_IN_USE;

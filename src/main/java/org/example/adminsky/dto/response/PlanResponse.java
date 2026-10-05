@@ -1,12 +1,13 @@
 package org.example.adminsky.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.List;
 import org.example.adminsky.enums.CutoffPolicy;
 import org.example.adminsky.enums.QuotaType;
+
+import java.time.Instant;
+import java.util.List;
 
 @Data
 @Builder
@@ -14,21 +15,23 @@ import org.example.adminsky.enums.QuotaType;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PlanResponse {
+
     Long id;
     String code;
     String name;
     String description;
-    BigDecimal price;
-    Short durationMonths;
+    Long price;
+    Integer durationMonths;
     QuotaType quotaType;
     Long dataQuotaMb;
-    Short cycleDays;
+    Integer cycleDays;
     Integer voiceMinutes;
     CutoffPolicy cutoffPolicy;
     Integer throttleSpeedKbps;
+    @JsonProperty("isActive")
     Boolean active;
-    Instant createdAt;
-    Instant updatedAt;
     List<BonusResponse> bonuses;
     List<AppQuotaResponse> appQuotas;
+    Instant createdAt;
+    Instant updatedAt;
 }
