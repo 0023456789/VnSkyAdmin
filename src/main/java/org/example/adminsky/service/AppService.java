@@ -8,6 +8,7 @@ import org.example.adminsky.dto.request.AppCreationRequest;
 import org.example.adminsky.dto.request.AppUpdateRequest;
 import org.example.adminsky.dto.response.AppResponse;
 import org.example.adminsky.dto.response.PageResponse;
+import org.example.adminsky.enums.AppWarningCode;
 import org.example.adminsky.entity.App;
 import org.example.adminsky.exception.AppException;
 import org.example.adminsky.exception.ErrorCode;
@@ -58,7 +59,11 @@ public class AppService {
     public AppResponse updateAppStatus(Long id, boolean active) {
         App app = findOrThrow(id);
         app.setActive(active);
-        return appMapper.toAppResponse(app);
+        AppResponse response = appMapper.toAppResponse(app);
+        if (!active && planAppQuotaRepository.existsByAppId(id)) {
+            response.setWarnings(java.util.List.of(AppWarningCode.APP_STILL_ASSIGNED_TO_PLANS));
+        }
+        return response;
     }
 
     @Transactional

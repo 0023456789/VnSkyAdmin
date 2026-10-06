@@ -1,5 +1,7 @@
 package org.example.adminsky.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/plans")
+@Tag(name = "Plans")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
@@ -24,11 +27,13 @@ public class PlanController {
     PlanService planService;
 
     @PostMapping
+    @Operation(summary = "Create a plan with its bonus and app quota configuration")
     ApiResponse<PlanResponse> createPlan(@RequestBody @Valid PlanCreationRequest request) {
         return ApiResponse.<PlanResponse>builder().result(planService.createPlan(request)).build();
     }
 
     @GetMapping
+    @Operation(summary = "List plans with optional active, keyword, and duration filters")
     ApiResponse<PageResponse<PlanSummaryResponse>> getPlans(
             @RequestParam(required = false) Boolean isActive,
             @RequestParam(required = false) String keyword,
@@ -41,17 +46,20 @@ public class PlanController {
     }
 
     @GetMapping("/{planId}")
+    @Operation(summary = "Get plan details including bonuses and app quotas")
     ApiResponse<PlanResponse> getPlan(@PathVariable Long planId) {
         return ApiResponse.<PlanResponse>builder().result(planService.getPlan(planId)).build();
     }
 
     @PutMapping("/{planId}")
+    @Operation(summary = "Replace plan fields, bonuses, and app quotas")
     ApiResponse<PlanResponse> updatePlan(@PathVariable Long planId,
                                          @RequestBody @Valid PlanUpdateRequest request) {
         return ApiResponse.<PlanResponse>builder().result(planService.updatePlan(planId, request)).build();
     }
 
     @PatchMapping("/{planId}/status")
+    @Operation(summary = "Activate or deactivate a plan")
     ApiResponse<PlanResponse> updatePlanStatus(@PathVariable Long planId,
                                                @RequestBody @Valid PlanStatusRequest request) {
         return ApiResponse.<PlanResponse>builder()
@@ -59,6 +67,7 @@ public class PlanController {
     }
 
     @DeleteMapping("/{planId}")
+    @Operation(summary = "Delete a plan; referenced plans cannot be deleted")
     ApiResponse<String> deletePlan(@PathVariable Long planId) {
         return ApiResponse.<String>builder().result(planService.deletePlan(planId)).build();
     }
