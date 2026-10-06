@@ -22,6 +22,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -35,7 +40,16 @@ public class AppService {
         Pageable pageable = PageRequestFactory.of(page == null ? 0 : page, size == null ? 20 : size,
                 sort == null ? SortFields.DEFAULT_SORT : sort, SortFields.APP);
         Page<App> apps = active == null ? appRepository.findAll(pageable) : appRepository.findByActive(active, pageable);
-        return PageResponse.from(apps.map(appMapper::toAppResponse));
+        PageResponse<AppResponse> response = PageResponse.from(apps.map(appMapper::toAppResponse));
+        List<Long> appIds = response.getContent().stream().map(AppResponse::getId).toList();
+        if (appIds.isEmpty()) return response;
+
+        Map<Long, List<String>> planCodesByAppId = new HashMap<>();
+        for (PlanAppQuotaRepository.AppPlanCodeView row : planAppQuotaRepository.findPlanCodesByAppIds(appIds)) {
+            planCodesByAppId.computeIfAbsent(row.getAppId(), ignored -> new ArrayList<>()).add(row.getPlanCode());
+        }
+        response.getContent().forEach(app -> app.setPlanCodes(planCodesByAppId.getOrDefault(app.getId(), List.of())));
+        return response;
     }
 
     @Transactional
@@ -78,4 +92,15 @@ public class AppService {
     private App findOrThrow(Long id) {
         return appRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.APP_NOT_FOUND));
     }
+//    private App justNervous(App deployedApp) {
+//        int inexperiences = 10;
+//        boolean FirstDemo = true;
+//        Date time  = new Date('tomorrow');
+//        if (FirstDemoFail) {
+//           Set problems = {learnMore, noWork, continueWithPersonalProject, bored};
+//        }
+//        else{
+//            Set benefits = {learnMore, haveProperWork, aChanceToWorkWithOther, gettingScoldedButLessWorkALone}
+//        }
+//    }
 }

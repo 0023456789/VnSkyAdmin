@@ -18,6 +18,13 @@ public interface PlanAppQuotaRepository extends JpaRepository<PlanAppQuota, Long
         Long getCnt();
     }
 
+    /** Plan codes assigned to each App; aliases must match projection getters. */
+    interface AppPlanCodeView {
+        Long getAppId();
+
+        String getPlanCode();
+    }
+
     /** Delete guard for App ("app is in use"). Resolves to quota.app.id. */
     boolean existsByAppId(Long appId);
 
@@ -25,4 +32,8 @@ public interface PlanAppQuotaRepository extends JpaRepository<PlanAppQuota, Long
     @Query("select q.plan.id as planId, count(q) as cnt from PlanAppQuota q "
             + "where q.plan.id in :planIds group by q.plan.id")
     List<PlanCountView> countByPlanIds(@Param("planIds") Collection<Long> planIds);
+
+    @Query("select distinct q.app.id as appId, q.plan.code as planCode from PlanAppQuota q "
+            + "where q.app.id in :appIds order by q.app.id, q.plan.code")
+    List<AppPlanCodeView> findPlanCodesByAppIds(@Param("appIds") Collection<Long> appIds);
 }

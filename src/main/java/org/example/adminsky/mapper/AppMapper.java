@@ -26,5 +26,6 @@ public interface AppMapper {
     void updateApp(@MappingTarget App app, AppUpdateRequest request);
 
     @Mapping(target = "warnings", ignore = true)
+    @Mapping(target = "planCodes", ignore = true)
     AppResponse toAppResponse(App app);
 }
