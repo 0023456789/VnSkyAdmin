@@ -23,5 +23,7 @@ public class AppResponse {
     Instant createdAt;
     Instant updatedAt;
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    List<String> planCodes;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     List<AppWarningCode> warnings;
 }
