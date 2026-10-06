@@ -25,5 +25,6 @@ public interface AppMapper {
     @Mapping(target = "active", ignore = true)
     void updateApp(@MappingTarget App app, AppUpdateRequest request);
 
+    @Mapping(target = "warnings", ignore = true)
     AppResponse toAppResponse(App app);
 }
