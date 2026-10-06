@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.example.adminsky.entity.Plan;
 import org.example.adminsky.entity.PromoCode;
 import org.example.adminsky.enums.PromoReasonCode;
-import org.example.adminsky.enums.SubscriptionStatus;
 import org.example.adminsky.repository.PlanSubscriptionRepository;
 import org.springframework.stereotype.Component;
 
@@ -26,8 +25,7 @@ public class PromoEligibilityChecker {
         if (promo.getUsageLimit() != null && promo.getUsedCount() >= promo.getUsageLimit())
             return Optional.of(PromoReasonCode.EXHAUSTED);
         if (msisdn != null && promo.getMaxUsesPerMsisdn() != null
-                && planSubscriptionRepository.countByPromoCodeIdAndMsisdnAndStatusNot(
-                                promo.getId(), msisdn, SubscriptionStatus.CANCELLED)
+                && planSubscriptionRepository.countByPromoCodeIdAndMsisdn(promo.getId(), msisdn)
                         >= promo.getMaxUsesPerMsisdn())
             return Optional.of(PromoReasonCode.USER_LIMIT_REACHED);
         if (!promo.isAppliesToAllPlans() && promo.getPlans().stream().noneMatch(p -> p.getId().equals(plan.getId())))

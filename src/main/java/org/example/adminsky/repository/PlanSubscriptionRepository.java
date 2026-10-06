@@ -20,11 +20,20 @@ import org.springframework.stereotype.Repository;
 public interface PlanSubscriptionRepository
         extends JpaRepository<PlanSubscription, Long>, JpaSpecificationExecutor<PlanSubscription> {
 
+    @EntityGraph(attributePaths = {"plan", "promoCode", "bonuses"})
     Optional<PlanSubscription> findByMsisdnAndIdempotencyKey(String msisdn, String key);
 
-    boolean existsByMsisdnAndStatusNot(String msisdn, SubscriptionStatus status);
+    boolean existsByMsisdn(String msisdn);
 
-    long countByPromoCodeIdAndMsisdnAndStatusNot(Long promoId, String msisdn, SubscriptionStatus status);
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update PlanSubscription s set s.status = :expired, s.updatedAt = :now "
+            + "where s.status = :active and s.expiresAt is not null and s.expiresAt <= :now")
+    int expireActiveSubscriptions(
+            @Param("now") Instant now,
+            @Param("active") SubscriptionStatus active,
+            @Param("expired") SubscriptionStatus expired);
+
+    long countByPromoCodeIdAndMsisdn(Long promoId, String msisdn);
 
     boolean existsByPlanId(Long planId);
 
@@ -37,13 +46,12 @@ public interface PlanSubscriptionRepository
     @EntityGraph(attributePaths = {"plan", "promoCode", "bonuses"})
     Optional<PlanSubscription> findWithDetailById(Long id);
 
-    /** Lấy mức dùng cao nhất theo MSISDN; caller giới hạn một dòng và loại subscription đã hủy. */
+    /** Lấy mức redeem cao nhất theo MSISDN, tính cả subscription đã hủy. */
     @Query("select count(s) from PlanSubscription s "
-            + "where s.promoCode.id = :promoId and s.status <> :cancelled "
+            + "where s.promoCode.id = :promoId "
             + "group by s.msisdn order by count(s) desc")
     List<Long> findUsesPerMsisdnDesc(
             @Param("promoId") Long promoId,
-            @Param("cancelled") SubscriptionStatus cancelled,
             Pageable pageable);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)

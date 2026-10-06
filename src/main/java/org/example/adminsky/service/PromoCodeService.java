@@ -13,7 +13,7 @@ import org.example.adminsky.dto.response.PromoValidateResponse;
 import org.example.adminsky.entity.Plan;
 import org.example.adminsky.entity.PromoCode;
 import org.example.adminsky.enums.PromoReasonCode;
-import org.example.adminsky.enums.SubscriptionStatus;
+import org.example.adminsky.enums.PromoWarningCode;
 import org.example.adminsky.exception.AppException;
 import org.example.adminsky.exception.ErrorCode;
 import org.example.adminsky.mapper.PromoMapper;
@@ -82,7 +82,7 @@ public class PromoCodeService {
             throw new AppException(ErrorCode.PROMO_LIMIT_BELOW_USED);
         if (request.getMaxUsesPerMsisdn() != null) {
             List<Long> highestUsage = planSubscriptionRepository.findUsesPerMsisdnDesc(
-                    id, SubscriptionStatus.CANCELLED, PageRequest.of(0, 1));
+                    id, PageRequest.of(0, 1));
             if (!highestUsage.isEmpty() && request.getMaxUsesPerMsisdn() < highestUsage.get(0))
                 throw new AppException(ErrorCode.PROMO_LIMIT_BELOW_USAGE);
         }
@@ -114,19 +114,21 @@ public class PromoCodeService {
     public PromoValidateResponse validatePromo(PromoValidateRequest request) {
         Plan plan = planRepository.findById(request.getPlanId()).orElseThrow(() -> new AppException(ErrorCode.PLAN_NOT_FOUND));
         BigDecimal price = plan.getPrice();
+        List<PromoWarningCode> warnings = plan.isActive() ? List.of() : List.of(PromoWarningCode.PLAN_INACTIVE);
         PromoCode promo = promoCodeRepository.findByCode(CodeNormalizer.normalize(request.getCode())).orElse(null);
-        if (promo == null) return invalid(PromoReasonCode.NOT_FOUND, price);
+        if (promo == null) return invalid(PromoReasonCode.NOT_FOUND, price, warnings);
         Optional<PromoReasonCode> reason = eligibilityChecker.check(
                 promo, plan, price, Instant.now(clock), request.getMsisdn());
-        if (reason.isPresent()) return invalid(reason.get(), price);
+        if (reason.isPresent()) return invalid(reason.get(), price, warnings);
         BigDecimal discount = discountCalculator.calculate(promo, price);
         return PromoValidateResponse.builder().valid(true).discountAmount(discount.longValueExact())
-                .finalPrice(price.subtract(discount).longValueExact()).build();
+                .finalPrice(price.subtract(discount).longValueExact()).warnings(warnings).build();
     }
 
-    private PromoValidateResponse invalid(PromoReasonCode reason, BigDecimal price) {
+    private PromoValidateResponse invalid(
+            PromoReasonCode reason, BigDecimal price, List<PromoWarningCode> warnings) {
         return PromoValidateResponse.builder().valid(false).reasonCode(reason).discountAmount(0L)
-                .finalPrice(price.longValueExact()).build();
+                .finalPrice(price.longValueExact()).warnings(warnings).build();
     }
 
     private void applyScope(PromoCode promo, Boolean appliesToAllPlans, List<Long> planIds) {
