@@ -26,9 +26,14 @@ public class GlobalExceptionHandler {
     private final ConstraintErrorResolver constraintErrorResolver;
 
     @ExceptionHandler(AppException.class)
-    public ResponseEntity<ApiResponse<Void>> handleAppException(AppException exception) {
+    public ResponseEntity<ApiResponse<Object>> handleAppException(AppException exception) {
         ErrorCode error = exception.getErrorCode();
-        return error(error, exception.getMessage());
+        ApiResponse<Object> body = ApiResponse.<Object>builder()
+                .code(error.getCode())
+                .message(exception.getMessage())
+                .result(exception.getDetails())
+                .build();
+        return ResponseEntity.status(error.getStatusCode()).body(body);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

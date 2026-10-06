@@ -42,7 +42,8 @@ public enum ErrorCode {
     PROMO_LIMIT_INVALID(1311, "Promo limit configuration is invalid", HttpStatus.BAD_REQUEST),
     SUBSCRIPTION_NOT_FOUND(1401, "Subscription not found", HttpStatus.NOT_FOUND),
     MSISDN_INVALID(1402, "MSISDN is invalid", HttpStatus.BAD_REQUEST),
-    IDEMPOTENCY_KEY_INVALID(1403, "Idempotency-Key is missing or invalid", HttpStatus.BAD_REQUEST);
+    IDEMPOTENCY_KEY_INVALID(1403, "Idempotency-Key is missing or invalid", HttpStatus.BAD_REQUEST),
+    IDEMPOTENCY_KEY_REUSED(1404, "Idempotency-Key was already used with a different request", HttpStatus.CONFLICT);
 
     private final int code;
     private final String message;

@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.example.adminsky.enums.PromoReasonCode;
+import org.example.adminsky.enums.PromoWarningCode;
+import java.util.List;
 
 @Data
 @Builder
@@ -16,6 +18,7 @@ import org.example.adminsky.enums.PromoReasonCode;
 public class PromoValidateResponse {
     boolean valid;
     PromoReasonCode reasonCode;
+    List<PromoWarningCode> warnings;
     Long discountAmount;
     Long finalPrice;
 }
