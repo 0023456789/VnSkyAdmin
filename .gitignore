@@ -5,6 +5,7 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 Plan.md
+randomstuff
 ### STS ###
 .apt_generated
 .classpath
