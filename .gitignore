@@ -6,6 +6,7 @@ target/
 !**/src/test/**/target/
 Plan.md
 randomstuff
+!**/src/main/resources/db/migration
 ### STS ###
 .apt_generated
 .classpath
