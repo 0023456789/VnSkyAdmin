@@ -46,7 +46,7 @@ public interface PlanSubscriptionRepository
     @EntityGraph(attributePaths = {"plan", "promoCode", "bonuses"})
     Optional<PlanSubscription> findWithDetailById(Long id);
 
-    /** Lấy mức redeem cao nhất theo MSISDN, tính cả subscription đã hủy. */
+    /** Lấy số lượt dùng cao nhất theo MSISDN, kể cả đăng ký đã hủy để không hoàn lại hạn mức. */
     @Query("select count(s) from PlanSubscription s "
             + "where s.promoCode.id = :promoId "
             + "group by s.msisdn order by count(s) desc")
@@ -54,13 +54,17 @@ public interface PlanSubscriptionRepository
             @Param("promoId") Long promoId,
             Pageable pageable);
 
+    // Đồng bộ cờ single-use đã chụp trên các đăng ký cũ khi cấu hình mã khuyến mãi thay đổi.
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update PlanSubscription s set s.promoSingleUse = :flag, s.updatedAt = :now "
             + "where s.promoCode.id = :promoId")
     int updatePromoSingleUse(
             @Param("promoId") Long promoId, @Param("flag") boolean flag, @Param("now") Instant now);
 
-    /** Khóa giao dịch theo MSISDN để tuần tự hóa đăng ký; ép kết quả void sang varchar cho JDBC. */
+    /**
+     * Khóa giao dịch theo MSISDN để hai yêu cầu đăng ký cùng thuê bao được xử lý tuần tự.
+     * PostgreSQL trả void từ advisory lock, nên ép sang varchar để ánh xạ được qua JDBC.
+     */
     @Query(value = "select cast(pg_advisory_xact_lock(hashtextextended(:msisdn, 0)) as varchar)", nativeQuery = true)
     String lockMsisdn(@Param("msisdn") String msisdn);
 }

@@ -59,13 +59,20 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleDataIntegrity(DataIntegrityViolationException exception) {
         ErrorCode error = constraintErrorResolver.resolve(exception);
-        log.warn("Database integrity violation mapped to {}", error.name());
+        // Keep the database exception and constraint in the server log. A generic
+        // API response is intentional for unknown failures, but must not hide the
+        // cause from developers diagnosing the request.
+        if (error == ErrorCode.UNCATEGORIZED_EXCEPTION) {
+            log.error("Unmapped database integrity violation", exception);
+        } else {
+            log.warn("Database integrity violation mapped to {}", error.name(), exception);
+        }
         return error(error, error.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleUnexpected(Exception exception) {
-        log.error("Unhandled exception", exception);
+        log.error("Unhandled {}: {}", exception.getClass().getName(), exception.getMessage(), exception);
         ErrorCode error = ErrorCode.UNCATEGORIZED_EXCEPTION;
         return error(error, error.getMessage());
     }

@@ -72,6 +72,7 @@ public class SubscriptionService {
         if (promoCodeValue != null && promoCodeValue.isEmpty()) promoCodeValue = null;
         String msisdn = request.getMsisdn();
 
+        // Khóa theo thuê bao trước khi kiểm tra idempotency và trạng thái chu kỳ đầu để tránh race condition.
         subscriptionRepository.lockMsisdn(msisdn);
         var replay = subscriptionRepository.findByMsisdnAndIdempotencyKey(msisdn, idempotencyKey);
         if (replay.isPresent()) {
@@ -86,6 +87,7 @@ public class SubscriptionService {
         BigDecimal discount = BigDecimal.ZERO;
         PromoCode promo = null;
         if (promoCodeValue != null) {
+            // Khóa mã, kiểm tra điều kiện rồi tăng lượt dùng trong cùng giao dịch để giữ hạn mức chính xác.
             promo = promoCodeRepository.findForUpdateByCode(promoCodeValue)
                     .orElseThrow(() -> promoNotAvailable(PromoReasonCode.NOT_FOUND));
             var reason = eligibilityChecker.check(promo, plan, plan.getPrice(), now, msisdn);
@@ -96,6 +98,7 @@ public class SubscriptionService {
             }
         }
 
+        // Chụp giá và khuyến mãi tại thời điểm đăng ký để lịch sử không đổi khi cấu hình được sửa sau này.
         boolean firstCycle = firstCycleBonusResolver.isNewSubscriber(msisdn);
         PlanSubscription subscription = PlanSubscription.builder()
                 .plan(plan)
@@ -113,6 +116,7 @@ public class SubscriptionService {
                 .build();
 
         if (firstCycle) {
+            // Sao chép thưởng vào đăng ký; chỉ chu kỳ đầu tiên của thuê bao mới nhận các khoản này.
             plan.getBonuses().forEach(bonus -> subscription.addBonus(PlanSubscriptionBonus.builder()
                     .bonusType(bonus.getBonusType())
                     .amount(bonus.getAmount())
@@ -148,6 +152,7 @@ public class SubscriptionService {
     }
 
     private SubscriptionResponse replayResponse(PlanSubscription existing, Long planId, String promoCode) {
+        // Cùng khóa chỉ được phát lại nếu các đầu vào ảnh hưởng kết quả khớp với yêu cầu ban đầu.
         String existingPromo = existing.getPromoCode() == null ? null : existing.getPromoCode().getCode();
         if (!Objects.equals(existing.getPlan().getId(), planId)
                 || !Objects.equals(existingPromo, promoCode)) {

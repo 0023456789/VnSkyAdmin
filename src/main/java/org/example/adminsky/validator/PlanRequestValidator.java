@@ -12,8 +12,9 @@ import org.example.adminsky.util.CodeNormalizer;
 import org.springframework.stereotype.Component;
 
 /**
- * Service-side checks that need the DB (code uniqueness) or cannot be expressed
- * as Bean Validation alone (duplicate children). Quota/cutoff rules live on the DTOs.
+ * Kiểm tra tại tầng service cho các quy tắc cần truy vấn cơ sở dữ liệu (mã duy nhất)
+ * hoặc không thể chỉ biểu đạt bằng Bean Validation (các phần tử con bị trùng).
+ * Quy tắc hạn mức và thời điểm chốt được khai báo trên các DTO.
  */
 @Component
 @RequiredArgsConstructor

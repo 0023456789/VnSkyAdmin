@@ -13,7 +13,7 @@ import java.util.Optional;
 public interface PlanRepository extends JpaRepository<Plan, Long>, JpaSpecificationExecutor<Plan> {
     boolean existsByCode(String code);
     boolean existsByCodeAndIdNot(String code, Long id);
-    // Serializes plan edits with any registration holding a PESSIMISTIC_READ lock.
+    // Tuần tự hóa việc sửa gói với các giao dịch đăng ký đang giữ khóa PESSIMISTIC_READ.
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Plan> findForUpdateById(Long id);
     @Lock(LockModeType.PESSIMISTIC_READ)

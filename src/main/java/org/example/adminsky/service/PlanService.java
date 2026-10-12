@@ -49,7 +49,7 @@ public class PlanService {
     PlanRequestValidator planRequestValidator;
     Clock clock;
 
-    /** Creates a plan and persists its bonus and app-quota children atomically. */
+    /** Tạo gói cùng các khoản thưởng và hạn mức ứng dụng trong một giao dịch. */
     @Transactional
     public PlanResponse createPlan(PlanCreationRequest request) {
         planRequestValidator.validate(request, null);
@@ -59,7 +59,7 @@ public class PlanService {
         return planMapper.toPlanResponse(planRepository.save(plan));
     }
 
-    /** Returns a SQL-paginated list with grouped child counts for this page only. */
+    /** Trả danh sách phân trang; phần đếm dữ liệu con được tính cho các gói thuộc trang hiện tại. */
     @Transactional(readOnly = true)
     public PageResponse<PlanSummaryResponse> getPlans(Boolean isActive, String keyword, Integer durationMonths,
                                                        int page, int size, String sort) {
@@ -71,13 +71,13 @@ public class PlanService {
         return toPageResponse(plans);
     }
 
-    /** Loads plan details and its child collections through two entity-graph queries. */
+    /** Tải chi tiết gói cùng hai tập dữ liệu con bằng các truy vấn entity graph. */
     @Transactional(readOnly = true)
     public PlanResponse getPlan(Long planId) {
         return planMapper.toPlanResponse(findPlanDetail(planId));
     }
 
-    /** Replaces all plan fields and child rows while holding a write lock. */
+    /** Thay thông tin gói và đồng bộ các bản ghi con trong khi giữ khóa ghi. */
     @Transactional
     public PlanResponse updatePlan(Long planId, PlanUpdateRequest request) {
         Plan plan = planRepository.findForUpdateById(planId).orElseThrow(() -> planNotFound(planId));
@@ -89,7 +89,7 @@ public class PlanService {
         return planMapper.toPlanResponse(planRepository.saveAndFlush(plan));
     }
 
-    /** Updates status under a write lock and returns the refreshed plan. */
+    /** Cập nhật trạng thái dưới khóa ghi rồi tải lại chi tiết gói. */
     @Transactional
     public PlanResponse updatePlanStatus(Long planId, Boolean isActive) {
         Plan plan = planRepository.findForUpdateById(planId).orElseThrow(() -> planNotFound(planId));
@@ -97,7 +97,7 @@ public class PlanService {
         return planMapper.toPlanResponse(findPlanDetail(planId));
     }
 
-    /** Hard deletes a plan; RESTRICT foreign keys are reported as PLAN_IN_USE. */
+    /** Xóa cứng gói; khóa ngoại RESTRICT sẽ được ánh xạ thành lỗi PLAN_IN_USE. */
     @Transactional
     public String deletePlan(Long planId) {
         Plan plan = planRepository.findForUpdateById(planId).orElseThrow(() -> planNotFound(planId));
@@ -107,6 +107,7 @@ public class PlanService {
     }
 
     private void syncBonuses(Plan plan, List<BonusRequest> requests) {
+        // Ghép theo loại thưởng để cập nhật phần còn tồn tại, thêm phần mới và xóa phần bị bỏ khỏi yêu cầu.
         Set<BonusType> bonusTypes = new HashSet<>();
         Map<BonusType, PlanFirstCycleBonus> existing = plan.getBonuses().stream()
                 .collect(Collectors.toMap(PlanFirstCycleBonus::getBonusType, bonus -> bonus));
@@ -123,6 +124,7 @@ public class PlanService {
     }
 
     private void syncAppQuotas(Plan plan, List<AppQuotaRequest> requests) {
+        // Tải ứng dụng theo lô, sau đó đồng bộ hạn mức theo ID để tránh truy vấn lặp trong vòng lặp.
         Set<Long> appIds = new HashSet<>();
         Map<Long, PlanAppQuota> existing = plan.getAppQuotas().stream()
                 .collect(Collectors.toMap(quota -> quota.getApp().getId(), quota -> quota));

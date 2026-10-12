@@ -4,7 +4,7 @@ import org.example.adminsky.entity.PlanSubscription;
 import org.example.adminsky.enums.SubscriptionStatus;
 import org.springframework.data.jpa.domain.Specification;
 
-/** Bộ lọc danh sách subscription; tham số null hoặc rỗng sẽ không thêm điều kiện lọc. */
+/** Bộ lọc danh sách đăng ký; tham số null hoặc rỗng sẽ không thêm điều kiện lọc. */
 public final class SubscriptionSpecifications {
 
     public static final String MSISDN = "msisdn";

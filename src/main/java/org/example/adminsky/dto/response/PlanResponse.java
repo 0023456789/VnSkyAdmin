@@ -30,7 +30,7 @@ public class PlanResponse {
     Integer throttleSpeedKbps;
     @JsonProperty("isActive")
     Boolean active;
-    /** Bonus configuration applied to the first cycle only. */
+    /** Cấu hình thưởng chỉ được áp dụng cho chu kỳ đầu tiên. */
     List<BonusResponse> firstCycleBonuses;
     List<AppQuotaResponse> appQuotas;
     Instant createdAt;

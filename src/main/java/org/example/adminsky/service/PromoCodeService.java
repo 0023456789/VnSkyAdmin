@@ -81,6 +81,7 @@ public class PromoCodeService {
         if (request.getUsageLimit() != null && request.getUsageLimit() < promo.getUsedCount())
             throw new AppException(ErrorCode.PROMO_LIMIT_BELOW_USED);
         if (request.getMaxUsesPerMsisdn() != null) {
+            // Không hạ giới hạn mỗi thuê bao xuống dưới mức đã phát sinh, kể cả các lượt đã hủy.
             List<Long> highestUsage = planSubscriptionRepository.findUsesPerMsisdnDesc(
                     id, PageRequest.of(0, 1));
             if (!highestUsage.isEmpty() && request.getMaxUsesPerMsisdn() < highestUsage.get(0))
@@ -132,6 +133,7 @@ public class PromoCodeService {
     }
 
     private void applyScope(PromoCode promo, Boolean appliesToAllPlans, List<Long> planIds) {
+        // Thay toàn bộ phạm vi cũ; loại trùng ID nhưng vẫn kiểm tra mọi ID đều tham chiếu tới gói có thật.
         promo.getPlans().clear();
         promo.setAppliesToAllPlans(Boolean.TRUE.equals(appliesToAllPlans));
         if (promo.isAppliesToAllPlans()) return;

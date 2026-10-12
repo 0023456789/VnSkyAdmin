@@ -11,24 +11,24 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PlanAppQuotaRepository extends JpaRepository<PlanAppQuota, Long> {
 
-    /** Row of {@link #countByPlanIds}; the JPQL aliases must match these getters. */
+    /** Một dòng kết quả của {@link #countByPlanIds}; bí danh JPQL phải khớp với các getter này. */
     interface PlanCountView {
         Long getPlanId();
 
         Long getCnt();
     }
 
-    /** Plan codes assigned to each App; aliases must match projection getters. */
+    /** Mã các gói được gán cho từng ứng dụng; bí danh truy vấn phải khớp với getter của projection. */
     interface AppPlanCodeView {
         Long getAppId();
 
         String getPlanCode();
     }
 
-    /** Delete guard for App ("app is in use"). Resolves to quota.app.id. */
+    /** Kiểm tra ứng dụng còn được sử dụng trước khi xóa; điều kiện tương ứng với quota.app.id. */
     boolean existsByAppId(Long appId);
 
-    /** One grouped query for a whole page of plans. Skip the call when the page is empty. */
+    /** Gom số liệu của toàn bộ trang trong một truy vấn; bỏ qua truy vấn này nếu trang rỗng. */
     @Query("select q.plan.id as planId, count(q) as cnt from PlanAppQuota q "
             + "where q.plan.id in :planIds group by q.plan.id")
     List<PlanCountView> countByPlanIds(@Param("planIds") Collection<Long> planIds);

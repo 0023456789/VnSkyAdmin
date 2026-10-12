@@ -21,6 +21,7 @@ public interface PromoCodeRepository extends JpaRepository<PromoCode, Long>, Jpa
     @Query("select p from PromoCode p where p.code = :code")
     Optional<PromoCode> findForUpdateByCode(@Param("code") String code);
 
+    // Cập nhật có điều kiện trong một câu lệnh để tránh vượt hạn mức khi nhiều yêu cầu đồng thời.
     @Modifying(flushAutomatically = true)
     @Query(value = "UPDATE promo_code SET used_count = used_count + 1, updated_at = :now "
             + "WHERE id = :id AND is_active = TRUE "
