@@ -29,9 +29,6 @@ app:
       secret: ${JWT_SECRET:}
       access-ttl: 15m
       issuer: adminsky
-    bootstrap:
-      username: ${BOOTSTRAP_ADMIN_USERNAME:admin}
-      password: ${BOOTSTRAP_ADMIN_PASSWORD:}
 
 management:
   endpoints:
