@@ -43,7 +43,10 @@ public enum ErrorCode {
     SUBSCRIPTION_NOT_FOUND(1401, "Subscription not found", HttpStatus.NOT_FOUND),
     MSISDN_INVALID(1402, "MSISDN is invalid", HttpStatus.BAD_REQUEST),
     IDEMPOTENCY_KEY_INVALID(1403, "Idempotency-Key is missing or invalid", HttpStatus.BAD_REQUEST),
-    IDEMPOTENCY_KEY_REUSED(1404, "Idempotency-Key was already used with a different request", HttpStatus.CONFLICT);
+    IDEMPOTENCY_KEY_REUSED(1404, "Idempotency-Key was already used with a different request", HttpStatus.CONFLICT),
+    UNAUTHENTICATED(1601, "Authentication is required", HttpStatus.UNAUTHORIZED),
+    UNAUTHORIZED(1602, "You are not authorized to perform this action", HttpStatus.FORBIDDEN),
+    INVALID_CREDENTIALS(1603, "Invalid username or password", HttpStatus.UNAUTHORIZED);
 
     private final int code;
     private final String message;
