@@ -5,29 +5,36 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.mockito.Mockito.when;
 
+import org.example.adminsky.configuration.SecurityConfig;
 import org.example.adminsky.dto.request.LoginRequest;
 import org.example.adminsky.dto.response.TokenResponse;
+import org.example.adminsky.exception.ApiAccessDeniedHandler;
+import org.example.adminsky.exception.ApiAuthenticationEntryPoint;
+import org.example.adminsky.exception.ApiErrorWriter;
 import org.example.adminsky.service.AuthService;
-import org.junit.jupiter.api.BeforeEach;
+import org.example.adminsky.support.WithAdmin;
+import org.example.adminsky.util.ConstraintErrorResolver;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-@ExtendWith(MockitoExtension.class)
+@WebMvcTest(AuthController.class)
+@Import({SecurityConfig.class, ApiErrorWriter.class, ApiAuthenticationEntryPoint.class,
+        ApiAccessDeniedHandler.class})
 class AuthControllerTest {
-    @Mock AuthService authService;
+    @MockBean
+    AuthService authService;
+    @MockBean
+    ConstraintErrorResolver constraintErrorResolver;
+    @Autowired
     private MockMvc mockMvc;
 
-    @BeforeEach
-    void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(new AuthController(authService)).build();
-    }
-
     @Test
+    @WithAdmin
     void loginReturnsWrappedBearerToken() throws Exception {
         when(authService.login(org.mockito.ArgumentMatchers.any(LoginRequest.class)))
                 .thenReturn(TokenResponse.bearer("signed-token", 900));
