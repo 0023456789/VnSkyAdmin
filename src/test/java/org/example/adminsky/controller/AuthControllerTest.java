@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.mockito.Mockito.when;
 
 import org.example.adminsky.configuration.SecurityConfig;
+import org.example.adminsky.configuration.JwtConfig;
 import org.example.adminsky.dto.request.LoginRequest;
 import org.example.adminsky.dto.response.TokenResponse;
 import org.example.adminsky.exception.ApiAccessDeniedHandler;
@@ -23,7 +24,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(AuthController.class)
-@Import({SecurityConfig.class, ApiErrorWriter.class, ApiAuthenticationEntryPoint.class,
+@Import({SecurityConfig.class, JwtConfig.class, ApiErrorWriter.class, ApiAuthenticationEntryPoint.class,
         ApiAccessDeniedHandler.class})
 class AuthControllerTest {
     @MockBean
